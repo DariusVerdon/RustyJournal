@@ -1,9 +1,10 @@
 //External crates
 extern crate rustc_serialize;
+extern crate rand;
 
 //What I'm using from the crates
 use serde::{Serialize, Deserialize};
-
+use rand::Rng;
 //The struct I will be manipulating. The derive flag is set so the data can be written to a file
 //easier as Serialized data, and then Deserialized when I need to use it in the program.
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,9 +41,66 @@ impl Village {
     //SAVE VILLAGE TO FILE
     
     //LOAD VILLAGE FROM FILE
+    
+    //Display state
+    fn show_village(village: Village) -> Village{
+        println!("The Village of {}'s Current State:", village.name);
+        println!();
+        println!("Population: {}", village.population);
+        println!("Deceased: {}", village.deceased);
+        println!("Gold: {}", village.gold);
+        println!("Silver: {}", village.silver);
+        println!("Copper: {}", village.copper);
+        println!("Sick: {}", village.sick);
+        println!("Homeless: {}", village.homeless);
+        println!("Employed: {}", village.employed);
+        println!("Crop Health Level: {}", village.crop_health);
+        println!();
+        village
+    }
+
+    //Choose x number of events and execute them
+    fn execute_events(mut village: Village) -> Village{
+        let mut rng  = rand::thread_rng();
+        let mut number_of_events: i32 = rng.gen_range(0,31);
+
+        while number_of_events > 0{
+            let event_number: i32 = rng.gen_range(0, 15);
+            let number_of_effect: i32 = rng.gen_range(0, 40);
+            println!("The event is: {}", event_number);
+            println!();
+            match event_number{
+                0 => village = Village::members_expired(village, number_of_effect),
+                1 => village = Village::members_born(village, number_of_effect),
+                2 => village = Village::lost_gold(village, number_of_effect),
+                3 => village = Village::gained_gold(village, number_of_effect),
+                4 => village = Village::lost_silver(village, number_of_effect),
+                5 => village = Village::gained_silver(village, number_of_effect),
+                6 => village = Village::lost_copper(village, number_of_effect),
+                7 => village = Village::gained_copper(village, number_of_effect),
+                8 => village = Village::contracted_illness(village, number_of_effect),
+                9 => village = Village::recovered_illness(village, number_of_effect),
+                10 => village = Village::lost_home(village, number_of_effect),
+                11 => village = Village::gained_home(village, number_of_effect),
+                12 => village = Village::lost_job(village, number_of_effect),
+                13 => village = Village::gained_job(village, number_of_effect),
+                14 => village = Village::crop_health_incr(village, number_of_effect),
+                15 => village = Village::crop_health_decr(village, number_of_effect),
+                _ => () 
+            }
+            village = Village::show_village(village);
+            number_of_events -= 1;
+        }
+
+
+        village    
+    }
 
     fn members_expired(mut village: Village, number_effected: i32) -> Village{
-        village.deceased += number_effected;
+        if village.population > 0{
+            village.deceased += number_effected;
+        }
+
         if (village.population - number_effected) < 0{
             village.population = 0;
         }
@@ -170,7 +228,7 @@ fn main() {
         12, 
         4, 
         2, 
-        54, 
+        5, 
         0, 
         2, 
         1, 
@@ -178,14 +236,11 @@ fn main() {
         2,
         ); 
 
-    println!("{}", village.name);
-    println!("Current Employed: {}", village.employed);
-    println!("Oh no, someone lost a job!");
  
-    village = Village::lost_job(village, 7);
 
-    println!("Current Employed: {}", village.employed);
-
+    village = Village::show_village(village); 
+    village = Village::execute_events(village);
+    village = Village::show_village(village);
     let encoded = serde_json::to_string(&village).unwrap();
 
     println!("serialized = {}", encoded);
